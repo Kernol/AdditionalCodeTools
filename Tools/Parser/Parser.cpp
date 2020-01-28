@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "Parser.h"
-#include <cassert>
+#include <kerlog.h>
 
 Parse::Parser Parse::defaultParser;
 
@@ -24,7 +24,7 @@ Parse::Parser::Parser(): _keyFile(nullptr, [](GKeyFile* ptr){ if (ptr != nullptr
 
 Parse::ErrorCode Parse::Parser::loadConfigFile(const std::string& file)
 {
-    //DEBUG("Loading key file with name/path" + file + "' @ " + std::to_string((uint64_t) this));
+    KERLOG_DEBUG("Loading key file with name/path" + file + "' @ " + std::to_string((uint64_t) this));
     decltype(_keyFile) keyFile(g_key_file_new(), [](GKeyFile* ptr)
                 {
                     if (ptr != nullptr)
@@ -32,18 +32,18 @@ Parse::ErrorCode Parse::Parser::loadConfigFile(const std::string& file)
                 });
     if(!keyFile)
     {   //GCOV_EXCL_START
-        //ERROR("Error creating new key file: " + std::to_string(GlibError));
+        KERLOG_ERROR("Error creating new key file: " + std::to_string(GlibError));
         return GlibError;
         //GCOV_EXCL_STOP
     }
     g_autoptr(GError) glibError = nullptr;
     if (!g_key_file_load_from_file(keyFile.get(), file.c_str(), G_KEY_FILE_NONE, &glibError))
     {
-        //ERROR("Error loading key file: " + std::string(glibError->message));
+        KERLOG_ERROR("Error loading key file: " + std::string(glibError->message));
         return LoadFailed;
     }
     _keyFile = std::move(keyFile);
-    //DEBUG("Key file with name/path '" + file + "' loaded. Returning Success");
+    KERLOG_DEBUG("Key file with name/path '" + file + "' loaded. Returning Success");
     return Success;
 }
 
@@ -53,20 +53,20 @@ Parse::Parser::glibErrorCheck(const std::string& group_name, const std::string& 
 {
     if (g_error_matches(error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_GROUP_NOT_FOUND))
     {
-        //ERROR("Group '" + group_name + "' doesn't exist in key file: " + std::string(error->message)
-//              + ".Returning value: GroupNotFound");
+        KERLOG_ERROR("Group '" + group_name + "' doesn't exist in key file: " + std::string(error->message)
+              + ".Returning value: GroupNotFound");
         return GroupNotFound;
     }
     else if (g_error_matches(error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND))
     {
-        //ERROR("Key '" + key + "' doesn't exist in key file: " + std::string(error->message)
-//              + ".Returning value: KeyNotFound");
+        KERLOG_ERROR("Key '" + key + "' doesn't exist in key file: " + std::string(error->message)
+              + ".Returning value: KeyNotFound");
         return KeyNotFound;
     }
     else
     {
-        //ERROR("Glib error occurred while parsing an option. Glib error message: " + std::string(error->message)
-//              + ".Returning value: GlibError");
+        KERLOG_ERROR("Glib error occurred while parsing an option. Glib error message: " + std::string(error->message)
+              + ".Returning value: GlibError");
         return GlibError;
     }
 }
@@ -75,10 +75,10 @@ Parse::Parser::glibErrorCheck(const std::string& group_name, const std::string& 
 std::pair<std::string, Parse::ErrorCode>
 Parse::Parser::getStringFromFile(const std::string& group_name, const std::string& key) const
 {
-    //DEBUG("Parsing single key string " + key + " from group " + group_name + " @ " + std::to_string((uint64_t) this));
+    KERLOG_DEBUG("Parsing single key string " + key + " from group " + group_name + " @ " + std::to_string((uint64_t) this));
     if(!_keyFile)
     {
-        //ERROR("_keyFile is not loaded. Returning FileNotLoaded");
+        KERLOG_ERROR("_keyFile is not loaded. Returning FileNotLoaded");
         return {"", FileNotLoaded};
     }
     g_autoptr(GError) error = nullptr;
@@ -86,7 +86,7 @@ Parse::Parser::getStringFromFile(const std::string& group_name, const std::strin
                                                 [](char* str) { free(str); } );
     if(error != nullptr)
         return {"", glibErrorCheck(group_name, key, error)};
-    //DEBUG("Parsing key strings " + key + " from group " + group_name + " completed. Returning Success");
+    KERLOG_DEBUG("Parsing key strings " + key + " from group " + group_name + " completed. Returning Success");
     return {value.get(), Success};
 }
 
@@ -94,10 +94,10 @@ Parse::Parser::getStringFromFile(const std::string& group_name, const std::strin
 std::pair<std::vector<std::string>, Parse::ErrorCode>
 Parse::Parser::getStringList(const std::string& group_name, const std::string& key) const
 {
-    //DEBUG("Parsing key strings " + key + " from group " + group_name + " @ " + std::to_string((uint64_t) this));
+    KERLOG_DEBUG("Parsing key strings " + key + " from group " + group_name + " @ " + std::to_string((uint64_t) this));
     if(!_keyFile)
     {
-        //ERROR("_keyFile is not loaded. Returning FileNotLoaded");
+        KERLOG_ERROR("_keyFile is not loaded. Returning FileNotLoaded");
         return {{}, FileNotLoaded};
     }
     gsize size = 0;
@@ -111,17 +111,17 @@ Parse::Parser::getStringList(const std::string& group_name, const std::string& k
     if(error != nullptr)
         return {{}, glibErrorCheck(group_name, key, error)};
     std::vector<std::string> res(value.get(), value.get() + size);
-    //DEBUG("Parsing key strings " + key + " from group " + group_name + " completed. Returning Success");
+    KERLOG_DEBUG("Parsing key strings " + key + " from group " + group_name + " completed. Returning Success");
     return {res, Success};
 }
 
 
 std::pair<Parse::GroupInfo, Parse::ErrorCode> Parse::Parser::parseGroup(const std::string& group_name) const
 {
-    //DEBUG("Parsing group '" + group_name + "' @ " + std::to_string((uint64_t) this));
+    KERLOG_DEBUG("Parsing group '" + group_name + "' @ " + std::to_string((uint64_t) this));
     if(!_keyFile)
     {
-        //ERROR("_keyFile is not loaded. Returning FileNotLoaded");
+        KERLOG_ERROR("_keyFile is not loaded. Returning FileNotLoaded");
         return {{}, FileNotLoaded};
     }
     g_autoptr(GError) error = nullptr;
@@ -129,8 +129,8 @@ std::pair<Parse::GroupInfo, Parse::ErrorCode> Parse::Parser::parseGroup(const st
                                                &error), [](gchar** ptr){ if (ptr != nullptr) g_strfreev(ptr);});
     if(error != nullptr && g_error_matches(error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_GROUP_NOT_FOUND))
     {
-        //ERROR("Error finding group '" + group_name + "' in key file: " + std::string(error->message)
-//              + "Returning value: GroupNotFound");
+        KERLOG_ERROR("Error finding group '" + group_name + "' in key file: " + std::string(error->message)
+              + "Returning value: GroupNotFound");
         return {{}, GroupNotFound};
     }
     GroupInfo groupInfo;
@@ -141,11 +141,11 @@ std::pair<Parse::GroupInfo, Parse::ErrorCode> Parse::Parser::parseGroup(const st
             groupInfo.emplace_back(g_keys.get()[i], std::move(value.first));
         else
         {
-            //ERROR("Couldn't parse an option. Returning value: error code from parseOption method");
+            KERLOG_ERROR("Couldn't parse an option. Returning value: error code from parseOption method");
             return {{}, value.second};
         }
     }
-    //DEBUG("Parsing group '" + group_name + "' completed. Returning value: Success, keys vector");
+    KERLOG_DEBUG("Parsing group '" + group_name + "' completed. Returning value: Success, keys vector");
     return {groupInfo, Success};
 }
 

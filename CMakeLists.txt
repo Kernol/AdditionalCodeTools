@@ -18,7 +18,9 @@ cmake_minimum_required(VERSION 3.10)
 project(AdditionalCodeTools)
 
 include_directories(Catch2/single_include/catch2)
+include_directories(Kerlog/src)
 
 set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(Tools)
+add_subdirectory(Kerlog)

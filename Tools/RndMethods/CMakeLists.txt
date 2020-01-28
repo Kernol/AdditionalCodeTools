@@ -23,6 +23,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 add_library(RndMethods RndMethods.h RndMethods.cpp)
 
 enable_testing()
-add_executable(RndMethodsTest RndMethods.h RndMethods.cpp test.cpp)
-target_link_libraries(RndMethodsTest)
+add_executable(RndMethodsTest test.cpp)
+target_link_libraries(RndMethodsTest RndMethods)
 add_test(RndMethodsTest RndMethodsTest)
